@@ -1,8 +1,12 @@
 "use client";
-import type { HTMLAttributes } from "react";
+import type { ChangeEvent, HTMLAttributes } from "react";
 import React, { useRef, useState } from "react";
 import Img from "../Img/Img";
 import Input from "@/ui/atoms/Input/Input";
+import EmojiPicker from "emoji-picker-react";
+import ContentEditable from "react-contenteditable";
+import { AnyAaaaRecord } from "dns";
+import { Paperclip } from "react-bootstrap-icons";
 
 interface CricapQProps extends HTMLAttributes<HTMLDivElement> {}
 
@@ -14,6 +18,11 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+  };
+  const [message, setMessage] = useState("");
+  const handleInputChange: any = (event: AnyAaaaRecord) => {
+    // @ts-ignore
+    setMessage(event?.target?.value);
   };
 
   return (
@@ -86,16 +95,47 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
             {/* Comment input box */}
             <div className="border-t border-[#E7E7E7] pt-4 mb-4">
               <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  className="w-full p-2 border border-[#E7E7E7] rounded-lg outline-none pl-4"
-                  style={{ backgroundColor: "#F5F5F5" }}
-                />
+                <ul className="flex items-center">
+                  <li className="w-[550px] flex-1 me-2 pe-1 article-field">
+                    <ContentEditable
+                      className="flex items-center py-2 px-4 rounded-lg border-2 border-[#E7E7E7]"
+                      tagName="article"
+                      html={message}
+                      onChange={handleInputChange}
+                    />
+                  </li>
+                  <li className="mx-2 px-1">
+                    <label className="cursor-pointer">
+                      <Paperclip size={20} className="text-[#464646]" />
+                      <input className="hidden" type="file" />
+                    </label>
+                  </li>
+                  <li>
+                    <div className="group relative inline-block">
+                      <button className="w-[40px] h-[40px] p-1 text-[16px] text-white focus:outline-none">
+                        <Img src={"/assets/imgs/icons/mood.svg"} height={50} width={50} alt="User" />
+                      </button>
+                      <ul className="hidden group-focus-within:block list-none absolute bg-gray-50 w-40 z-1 shadow-lg animate-slideIn">
+                        <EmojiPicker
+                          lazyLoadEmojis
+                          height={400}
+                          previewConfig={{
+                            showPreview: false,
+                          }}
+                          onEmojiClick={({ getImageUrl }) =>
+                            setMessage(
+                              (prevMessage) =>
+                                prevMessage + `<img style="height: 20px !important;" src=${getImageUrl()} />`
+                            )
+                          }
+                        />
+                      </ul>
+                    </div>
+                  </li>
+                </ul>
                 <button className="text-[#007BFF] font-semibold">Post</button>
               </div>
             </div>
-
             {/* Display comments */}
             <div className="flex gap-2">
               <div className="comment-content flex gap-2 bg-[#F5F5F5] p-3 rounded-lg w-full">
