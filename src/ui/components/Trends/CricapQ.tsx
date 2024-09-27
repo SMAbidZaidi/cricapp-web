@@ -26,17 +26,20 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   };
 
   return (
-    <div {...props} className="w-full h-full grid grid-cols-6 gap-4 bg-white">
-      <div className="col-start-2 col-span-4 ">
-        <div className="flex items-start gap-2 my-4">
-          <div className="tab-profile-image">
-            <Img src={"/assets/imgs/icons/LoginUser.png"} height={50} width={50} alt="" />
-          </div>
-          <div className="profile-content-wrapper w-[80%]">
-            <div className="flex gap-2 items-center">
-              <div className="profile-name font-semibold text-[22px] text-black">Michile dangoy</div>
+    <div {...props} className="w-full h-full grid grid-cols-1 md:grid-cols-6 gap-2 bg-white">
+      <div className="md:col-start-2 col-span-4 mx-[8px]">
+        <div className="flex flex-col items-start gap-2 my-[50px]">
+          <div className="flex items-start">
+            <div className="tab-profile-image">
+              <Img src={"/assets/imgs/icons/LoginUser.png"} height={50} width={50} alt="" />
+            </div>
+            <div className="flex flex-col">
+              <div className="profile-name font-semibold text-[18px] text-black">Michile dangoy</div>
               <div className="profile-nick-name font-semibold text-[16px] text-[#9E9E9E]">@Michile</div>
             </div>
+          </div>
+          <div className="profile-content-wrapper md:w-full">
+            {/* content and img box */}
             <div className="flex flex-col items-start gap-2 py-2 border-b-2 border-[#E7E7E7]">
               <p className="text-[#464646] w-[100%]">
                 introducing #CricapApp,your ultimate companion for live crickt scores, thrilling match highlight, and
@@ -95,16 +98,22 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
             {/* Comment input box */}
             <div className="border-t border-[#E7E7E7] pt-4 mb-4">
               <div className="flex items-center gap-2">
-                <ul className="flex items-center">
-                  <li className="w-[550px] flex-1 me-2 pe-1 article-field">
+                <ul className="w-full flex items-center">
+                  <li className="flex-1 relative">
                     <ContentEditable
                       className="flex items-center py-2 px-4 rounded-lg border-2 border-[#E7E7E7]"
                       tagName="article"
                       html={message}
                       onChange={handleInputChange}
                     />
+                    {/* Placeholder */}
+                    {message === "" && (
+                      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                        Write the Comments...
+                      </span>
+                    )}
                   </li>
-                  <li className="mx-2 px-1">
+                  <li className="px-1">
                     <label className="cursor-pointer">
                       <Paperclip size={20} className="text-[#464646]" />
                       <input className="hidden" type="file" />
@@ -115,7 +124,7 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
                       <button className="w-[40px] h-[40px] p-1 text-[16px] text-white focus:outline-none">
                         <Img src={"/assets/imgs/icons/mood.svg"} height={50} width={50} alt="User" />
                       </button>
-                      <ul className="hidden group-focus-within:block list-none absolute bg-gray-50 w-40 z-1 shadow-lg animate-slideIn">
+                      <ul className="hidden group-focus-within:block list-none absolute z-1 shadow-lg animate-slideIn">
                         <EmojiPicker
                           lazyLoadEmojis
                           height={400}
