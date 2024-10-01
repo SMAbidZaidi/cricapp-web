@@ -1,10 +1,10 @@
 interface TextNode {
   text: string;
-  type: "text";
+  type: string;
 }
 
 interface ParagraphNode {
-  type: "paragraph";
+  type: string;
   children: TextNode[];
 }
 interface Content {
@@ -21,10 +21,9 @@ export const parseContent = (content: ParagraphNode[]): JSX.Element[] => {
   ));
 };
 
-
 export const getFirstThreeParagraphsText = (content: Content): string => {
   const paragraphs = content.content.slice(0, 3); // Get the first three paragraphs
   const text = paragraphs.map((paragraph) => paragraph.children.map((child) => child.text).join(" ")).join(" ");
 
   return text;
-};    
+};

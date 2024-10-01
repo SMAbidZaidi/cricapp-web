@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/validations/login.validation";
 import { toast } from "sonner";
 import Img from "../Img/Img";
+import Cookies from "js-cookie";
 
 interface LoginProps extends HTMLAttributes<HTMLDivElement> {
   modalData?: ModalData;
@@ -44,6 +45,11 @@ const Login: React.FC<LoginProps> = ({ modalData, ...props }) => {
           identifier: data.identifier,
           password: data.password,
         });
+
+        // Save auth data in cookies instead of localStorage
+        // Cookies.set("auth", JSON.stringify(response.data), { expires: 7 });
+
+        // Save auth data in localStorage
         localStorage.setItem("auth", JSON.stringify(response.data));
         window.location.assign("/");
         router.push("/", {});

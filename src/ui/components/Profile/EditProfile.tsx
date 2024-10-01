@@ -9,7 +9,6 @@ import Img from "../Img/Img";
 export interface ProfilePageProps extends HTMLAttributes<HTMLDivElement> {}
 export type UpdateUserInputs = {
   username: string;
-  // fullname: string;
   email: string;
   password: string;
 };
@@ -34,7 +33,6 @@ const EditProfile = () => {
   const { register, handleSubmit } = useForm<UpdateUserInputs>({
     defaultValues: {
       email: userData?.user?.email,
-      // fullname: userData?.user?.fullname,
       username: userData?.user?.username,
       password: "",
     },

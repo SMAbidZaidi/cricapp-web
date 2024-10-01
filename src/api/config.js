@@ -1,13 +1,18 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = 'https://ws.stage.cricap.com/api'; // staging server
+const BASE_URL = "https://ws.stage.cricap.com/api"; // staging server
 // https://ws.stage.cricap.com/api/auth/local/register
+
+// const auth = localStorage?.getItem("auth");
+// const authJson = JSON.parse(auth);
+// const token = authJson?.jwt;
 
 const client = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImlhdCI6MTcyNzY4ODE3NSwiZXhwIjoxNzMwMjgwMTc1fQ.GBa8pBWUqryhCchD9wCrhJx_qPpfJUeMjU2UDXEpSBc`,
   },
 });
 
@@ -28,10 +33,7 @@ client.interceptors.request.use(
   (err) => {
     // showErrorMsg(err);
     return Promise.reject(err);
-  },
+  }
 );
 
-export {
-  BASE_URL,
-  client,
-};
+export { BASE_URL, client };
