@@ -135,6 +135,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ ...props }) => {
         <div className="tab-content-wrapper p-4">
           <activeTab.component />
         </div>
+
+        
       </div>
     </div>
   );

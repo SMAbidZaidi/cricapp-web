@@ -89,10 +89,26 @@ export const likePost = (postId, userId) => {
 export const commentPost = (id) => {
   return getRequest(`/comments/post/${id}`);
 };
-export const addPostComment = (postId, commentData, commentText) => {
+export const addPostComment = (postId, userId, commentText, likesCount, createdAt, updatedAt) => {
   return postRequest(`/comments`, {
     post: postId,
-    user: commentData.user,
-    commentText: commentData.commentText,
+    user: userId,
+    commentText,
+    likesCount,
+    createdAt,
+    updatedAt,
   });
+};
+
+export const mentionsPost = () => {
+  return getRequest(`/posts/mentioned-posts`);
+};
+export const getMentionComments = () => {
+  return getRequest(`/comments`);
+};
+export const getAddPost = (payload) => {
+  return postRequest(`/posts`, {data:payload});
+};
+export const getAddPostMedia = (formData) => {
+  return postWithFormRequest(`/upload`, formData);
 };

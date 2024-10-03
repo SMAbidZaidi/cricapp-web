@@ -14,6 +14,7 @@ import ServerError from "../Error/ServerError";
 import { parseContent } from "@/utils/ParseContent";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import useHandleModal from "@/hooks/useHandleModal";
 
 dayjs.extend(relativeTime);
 
@@ -25,6 +26,7 @@ interface postsDataState {
 }
 const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   const [messages, setMessages] = useState<{ [key: number]: string }>({});
+  const { openModal, closeModal } = useHandleModal({ modal: "add_post" });
   const handleInputChange = (event: any, postId: number) => {
     const value = event?.target?.value;
     setMessages((prevMessages) => ({
@@ -111,32 +113,31 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
     const userData = auth ? JSON.parse(auth) : null;
     const userId = userData?.user?.id;
 
-    if (!commentText || !userId) return; // Prevent empty comments or missing user
+    // console.log("Comment text:", commentText);
+    // console.log("User  ID:", userId);
+
+    if (!commentText || !userId) {
+      console.log("Empty comment or missing user");
+      return;
+    }
 
     try {
-      // Send comment to the server
-      const response = await addPostComment(postId, {
-        user: userId,
-        commentText: commentText,
-      });
+      console.log("Sending comment:", { userId, commentText, postId });
+      const response = await addPostComment(
+        postId,
+        userId,
+        commentText,
+        0,
+        "2024-5-02T08:28:02.139Z",
+        "2024-10-02T08:18:02.139Z"
+      );
 
-      // Update local commentsData with the new comment
-      setCommentsData((prevCommentsData) => ({
-        ...prevCommentsData,
-        [postId]: [...(prevCommentsData[postId] || []), response.data],
-      }));
-
-      // Clear the input field
-      setMessages((prevMessages) => ({
-        ...prevMessages,
-        [postId]: "",
-      }));
+      console.log("Response from API:", response);
+      // ...
     } catch (error) {
       console.error("Failed to post comment", error);
     }
   };
-
-  console.log("commentsData", commentsData);
 
   if (postsData.isLoading) {
     return <Loading />;
@@ -145,6 +146,10 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   if (postsData.isError) {
     return <ServerError />;
   }
+
+  const handleAddPostModal = () => {
+    openModal();
+  };
 
   return (
     <div {...props} className="w-full h-full grid grid-cols-1 md:grid-cols-6 gap-2 bg-white">
@@ -244,8 +249,8 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
                         <ContentEditable
                           className="flex items-center py-2 px-4 rounded-lg border-2 border-[#E7E7E7]"
                           tagName="article"
-                          html={messages[post.id] || ""} // Use the post-specific message or an empty string
-                          onChange={(event) => handleInputChange(event, post.id)} // Pass the postId to handleInputChange
+                          html={messages[post.id] || ""}
+                          onChange={(event) => handleInputChange(event, post.id)}
                         />
                         {/* Placeholder */}
                         {(!messages[post.id] || messages[post.id] === "") && (
@@ -276,7 +281,7 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
                                 const emoji = emojiData.emoji;
                                 setMessages((prevMessages) => ({
                                   ...prevMessages,
-                                  [post.id]: (prevMessages[post.id] || "") + emoji, // Append emoji to the post's message
+                                  [post.id]: (prevMessages[post.id] || "") + emoji,
                                 }));
                               }}
                             />
@@ -290,7 +295,6 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
                     >
                       Post
                     </button>
-                    {/* <button className="text-[#007BFF] font-semibold">Post</button> */}
                   </div>
                 </div>
 
@@ -325,6 +329,14 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
             </div>
           );
         })}
+      </div>
+      <div className="relative my-4 flex flex-col items-start md:items-end gap-3">
+        <button
+          onClick={handleAddPostModal}
+          className="py-1 px-4 mx-3 bg-[#439B45] text-white rounded-[26px] font-medium text-[20px]  "
+        >
+          Add Post
+        </button>
       </div>
     </div>
   );

@@ -45,11 +45,6 @@ const Login: React.FC<LoginProps> = ({ modalData, ...props }) => {
           identifier: data.identifier,
           password: data.password,
         });
-
-        // Save auth data in cookies instead of localStorage
-        // Cookies.set("auth", JSON.stringify(response.data), { expires: 7 });
-
-        // Save auth data in localStorage
         localStorage.setItem("auth", JSON.stringify(response.data));
         window.location.assign("/");
         router.push("/", {});

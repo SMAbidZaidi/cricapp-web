@@ -10,10 +10,7 @@ interface AuthModalWrapperProps extends HTMLAttributes<HTMLDivElement> {
 const AuthModalWrapper: React.FC<AuthModalWrapperProps> = ({ children, className, ...props }) => {
   return (
     <div
-      className={cn(
-        "bg-white w-[90%]  lg:w-[50%] md:h-[90%] h-fit rounded-xl px-2 md:px-3 py-2 overflow-auto",
-        className
-      )}
+      className={cn("bg-white w-[90%] md:h-[90%] h-fit rounded-xl px-5 md:px-3 py-5 overflow-auto", className)}
       {...props}
     >
       {children}

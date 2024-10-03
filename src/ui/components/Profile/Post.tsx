@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Img from "../Img/Img";
-import { getPosts, likePost } from "@/api/methods/auth";
+import { getOwnPosts } from "@/api/methods/auth";
 import Loading from "@/app/loading";
 import ServerError from "../Error/ServerError";
 import { FeedPost } from "@/@types/feed";
@@ -13,7 +13,7 @@ interface postsDataState {
 }
 
 const Post = () => {
-  const [postsData, setPostsData] = useState<postsDataState>({
+  const [ownPostsData, setOwnPostsData] = useState<postsDataState>({
     isError: false,
     isLoading: true,
     data: undefined,
@@ -21,16 +21,19 @@ const Post = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const data = await getPosts();
-        setPostsData((prev) => {
-          return { ...prev, data: data.data?.feed?.data };
+        const response = await getOwnPosts();
+
+        // console.log("response for API data ", response.data.feed.data);
+
+        setOwnPostsData((prev) => {
+          return { ...prev, data: response?.data?.feed?.data };
         });
       } catch (error) {
-        setPostsData((prev) => {
+        setOwnPostsData((prev) => {
           return { ...prev, isError: true };
         });
       } finally {
-        setPostsData((prev) => {
+        setOwnPostsData((prev) => {
           return { ...prev, isLoading: false };
         });
       }
@@ -38,47 +41,17 @@ const Post = () => {
     fetchPosts();
   }, []);
 
-  // const handleLikePost = async (postId: number) => {
-  //   try {
-  //     await likePost(postId);
-
-  //     setPostsData((prev) => {
-  //       if (!prev.data) return prev;
-
-  //       const updatedData = prev.data.map((post) => {
-  //         const auth = localStorage.getItem("auth");
-  //         const userData = auth ? JSON.parse(auth) : null;
-
-  //         const userId = userData?.user?.id;
-  //         if (post.id === postId && userId) {
-  //           return {
-  //             ...post,
-  //             likesCount: post.likedByUser ? (post.likesCount ?? 0) - 1 : (post.likesCount ?? 0) + 1,
-  //             likedByUser: !post.likedByUser,
-  //           };
-  //         }
-  //         return post;
-  //       });
-  //       return { ...prev, data: updatedData };
-  //     });
-  //   } catch (error) {
-  //     console.error("Failed to like the post", error);
-  //   }
-  // };
-
-  console.log(postsData);
-
-  if (postsData.isLoading) {
+  if (ownPostsData.isLoading) {
     return <Loading />;
   }
 
-  if (postsData.isError) {
+  if (ownPostsData.isError) {
     return <ServerError />;
   }
 
   return (
     <div>
-      {postsData.data?.map((post, index) => {
+      {ownPostsData.data?.map((post, index) => {
         return (
           <div key={index} className="flex items-start gap-2 my-4">
             <div className="tab-profile-image">
@@ -86,7 +59,7 @@ const Post = () => {
             </div>
             <div className="profile-content-wrapper w-[100%]">
               <div className="flex gap-2 items-center">
-                <div className="profile-name font-semibold text-[22px] text-black">Michile dangoy</div>
+                <div className="profile-name font-semibold text-[22px] text-black">{post.user.username}</div>
                 <div className="profile-nick-name font-semibold text-[16px] text-[#9E9E9E]">@{post.user.username}</div>
               </div>
               <div className="flex flex-col items-start gap-2">
