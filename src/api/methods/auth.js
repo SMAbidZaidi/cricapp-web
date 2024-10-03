@@ -1,4 +1,3 @@
-import { get } from "http";
 import {
   postRequest,
   getRequest,
@@ -107,7 +106,7 @@ export const getMentionComments = () => {
   return getRequest(`/comments`);
 };
 export const getAddPost = (payload) => {
-  return postRequest(`/posts`, {data:payload});
+  return postRequest(`/posts`, { data: payload });
 };
 export const getAddPostMedia = (formData) => {
   return postWithFormRequest(`/upload`, formData);
