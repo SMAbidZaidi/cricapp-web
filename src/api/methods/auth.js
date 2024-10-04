@@ -5,6 +5,7 @@ import {
   getFilterRequest,
   deleteRequest,
   getParamsRequest,
+  putRequest,
 } from "../index";
 
 export const LoginAPI = (payload) => postRequest("/auth/local", payload);
@@ -106,8 +107,11 @@ export const getMentionComments = () => {
   return getRequest(`/comments`);
 };
 export const getAddPost = (payload) => {
-  return postRequest(`/posts`, { data: payload });
+  return postWithFormRequest(`/posts`, payload);
 };
-export const getAddPostMedia = (formData) => {
-  return postWithFormRequest(`/upload`, formData);
+export const deletePost = (id) => {
+  return deleteRequest(`/posts/${id}`);
+};
+export const updatePost = (id, formData) => {
+  return putRequest(`/posts/${id}`, formData);
 };

@@ -1,20 +1,22 @@
 "use client";
-import type { ChangeEvent, HTMLAttributes } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import type { HTMLAttributes } from "react";
+import React, { useEffect, useState } from "react";
 import Img from "../Img/Img";
 import Input from "@/ui/atoms/Input/Input";
 import EmojiPicker from "emoji-picker-react";
 import ContentEditable from "react-contenteditable";
-import { AnyAaaaRecord } from "dns";
 import { Paperclip } from "react-bootstrap-icons";
-import { addPostComment, commentPost, getPosts, likePost } from "@/api/methods/auth";
+import { addPostComment, commentPost, deletePost, getPosts, likePost } from "@/api/methods/auth";
 import { FeedPost } from "@/@types/feed";
 import Loading from "@/app/loading";
 import ServerError from "../Error/ServerError";
 import { parseContent } from "@/utils/ParseContent";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import useHandleModal from "@/hooks/useHandleModal";
+import AddPost from "./AddPost";
+import { toast } from "sonner";
+import UpdatePost from "./UpdatePost";
+import { useQueryState } from "nuqs";
 
 dayjs.extend(relativeTime);
 
@@ -25,13 +27,23 @@ interface postsDataState {
   data: FeedPost[] | undefined;
 }
 const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
+  const [_, setModalPost] = useQueryState("modal_post_id");
   const [messages, setMessages] = useState<{ [key: number]: string }>({});
-  const { openModal, closeModal } = useHandleModal({ modal: "add_post" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+  const toggleDropdown = (postId: number) => {
+    setOpenDropdownId((prevId) => (prevId === postId ? null : postId));
+  };
+
   const handleInputChange = (event: any, postId: number) => {
     const value = event?.target?.value;
     setMessages((prevMessages) => ({
       ...prevMessages,
-      [postId]: value, // Update the message for the specific post
+      [postId]: value,
     }));
   };
 
@@ -43,42 +55,41 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
 
   // State for comments
   const [commentsData, setCommentsData] = useState<{ [key: number]: any[] }>({});
+  const fetchPosts = async () => {
+    try {
+      const data = await getPosts();
 
+      setPostsData((prev) => {
+        return { ...prev, data: data.data?.feed?.data };
+      });
+
+      // Fetch comments for each post
+      const commentsPromises = data.data?.feed?.data.map(async (post: FeedPost) => {
+        const commentData = await commentPost(post.id); // Modify this based on your API structure
+        return { postId: post.id, comments: commentData.data?.results }; // Store comments by postId
+      });
+
+      const commentsResults = await Promise.all(commentsPromises);
+      const commentsMap = commentsResults.reduce((acc, { postId, comments }) => {
+        acc[postId] = comments;
+        return acc;
+      }, {} as { [key: number]: any[] });
+
+      setCommentsData(commentsMap);
+      return commentsResults;
+    } catch (error) {
+      setPostsData((prev) => {
+        return { ...prev, isError: true };
+      });
+    } finally {
+      setPostsData((prev) => {
+        return { ...prev, isLoading: false };
+      });
+    }
+  };
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const data = await getPosts();
-
-        setPostsData((prev) => {
-          return { ...prev, data: data.data?.feed?.data };
-        });
-
-        // Fetch comments for each post
-        const commentsPromises = data.data?.feed?.data.map(async (post: FeedPost) => {
-          const commentData = await commentPost(post.id); // Modify this based on your API structure
-          return { postId: post.id, comments: commentData.data?.results }; // Store comments by postId
-        });
-
-        const commentsResults = await Promise.all(commentsPromises);
-        const commentsMap = commentsResults.reduce((acc, { postId, comments }) => {
-          acc[postId] = comments;
-          return acc;
-        }, {} as { [key: number]: any[] });
-
-        setCommentsData(commentsMap);
-      } catch (error) {
-        setPostsData((prev) => {
-          return { ...prev, isError: true };
-        });
-      } finally {
-        setPostsData((prev) => {
-          return { ...prev, isLoading: false };
-        });
-      }
-    };
     fetchPosts();
   }, []);
-
   const handleLikePost = async (postId: number) => {
     try {
       await likePost(postId);
@@ -138,6 +149,48 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
       console.error("Failed to post comment", error);
     }
   };
+  // Handle delete post  API
+  const handleDeletePost = async (postId: number) => {
+    try {
+      await deletePost(postId);
+      setPostsData((prev) => {
+        if (!prev.data) return prev;
+
+        const updatedData = prev.data.filter((post) => post.id !== postId);
+        console.log("deleted post", updatedData);
+        toast.success("Post deleted successfully");
+        return { ...prev, data: updatedData };
+      });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error?.message || "Failed to Login", {
+        position: "top-right",
+        closeButton: true,
+      });
+    }
+  };
+  // Handle Update post  API
+  const [currentPost, setCurrentPost] = useState<{ id: number; content: any } | null>(null);
+  const toggleUpdateModal = () => {
+    if (isUpdateModalOpen) {
+      setModalPost(null);
+    } else if (openDropdownId) {
+      setModalPost(openDropdownId?.toString());
+    }
+    setIsUpdateModalOpen((prev) => !prev);
+  };
+  const handleUpdateModal = (post: FeedPost) => {
+    setCurrentPost({ id: post.id, content: post.content }); // Set the current post for updating
+    toggleUpdateModal();
+  };
+
+  const handlePostUpdate = (updatedPost: FeedPost) => {
+    setPostsData((prev) => {
+      if (!prev.data) return prev;
+
+      const updatedData = prev.data.map((post) => (post.id === updatedPost?.id ? updatedPost : post));
+      return { ...prev, data: updatedData };
+    });
+  };
 
   if (postsData.isLoading) {
     return <Loading />;
@@ -146,33 +199,54 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   if (postsData.isError) {
     return <ServerError />;
   }
-
-  const handleAddPostModal = () => {
-    openModal();
-  };
-
   return (
     <div {...props} className="w-full h-full grid grid-cols-1 md:grid-cols-6 gap-2 bg-white">
       <div className="md:col-start-2 col-span-4 mx-[8px]">
         {postsData?.data?.map((post, index) => {
           const getDate = post.createdAt;
           const formattedDate = dayjs(getDate).fromNow();
-          const postComments = commentsData[post.id] || []; // Get comments for this post
+          const postComments = commentsData[post.id] || [];
 
           return (
             <div key={index} className="flex flex-col items-start gap-2 my-[50px]">
-              <div className="flex items-start">
-                <div className="tab-profile-image">
-                  <Img src={"/assets/imgs/icons/LoginUser.png"} height={50} width={50} alt="" />
-                </div>
-                <div className="flex flex-col">
-                  <div className="profile-name font-semibold text-[18px] text-black">{post.user.username}</div>
-                  <div className="profile-nick-name font-semibold text-[16px] text-[#9E9E9E]">
-                    @{post.user.username}
+              <div className="w-full flex items-start justify-between">
+                <div className="flex items-start">
+                  <div className="tab-profile-image">
+                    <Img src={"/assets/imgs/icons/LoginUser.png"} height={50} width={50} alt="" />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="profile-name font-semibold text-[18px] text-black">{post?.user?.username}</div>
+                    <div className="profile-nick-name font-semibold text-[16px] text-[#9E9E9E]">
+                      @{post?.user?.username}
+                    </div>
                   </div>
                 </div>
+                <div className="w-full text-end flex flex-col items-end relative">
+                  <button
+                    onClick={() => toggleDropdown(post?.id)}
+                    className="text-black bg-[#E7E7E7] border-2 font-medium rounded-md text-lg px-2 pb-2 text-center inline-flex items-center h-[25px]"
+                  >
+                    ...
+                  </button>
+                  {openDropdownId === post.id && (
+                    <div className="z-10 divide-y divide-gray-100 rounded-lg shadow-lg w-44 bg-white text-end absolute top-[30px]">
+                      <ul className="py-2 text-sm dark:text-gray-200">
+                        <li className="cursor-pointer" onClick={() => handleUpdateModal(post)}>
+                          <a className="block px-4 py-2 text-[#9E9E9E] hover:bg-gray-100 dark:hover:text-black">
+                            Update
+                          </a>
+                        </li>
+                        <li className="cursor-pointer" onClick={() => handleDeletePost(post.id)}>
+                          <a className="block px-4 py-2 text-[#9E9E9E] hover:bg-gray-100 dark:hover:text-[red]">
+                            Delete
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="profile-content-wrapper w-full md:w-full lg:w-[80%]">
+              <div className="profile-content-wrapper w-full md:w-full lg:w-[100%] xl:w-[80%]">
                 {/* content and img box */}
                 <div className="flex flex-col items-start gap-2 py-2 border-b-2 border-[#E7E7E7]">
                   <p className="text-[#464646] w-[100%]">
@@ -330,14 +404,71 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
           );
         })}
       </div>
+
       <div className="relative my-4 flex flex-col items-start md:items-end gap-3">
         <button
-          onClick={handleAddPostModal}
+          onClick={toggleModal}
           className="py-1 px-4 mx-3 bg-[#439B45] text-white rounded-[26px] font-medium text-[20px]  "
         >
           Add Post
         </button>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed z-10 overflow-y-auto top-0 w-full left-0">
+          <div className="flex items-center justify-center min-height-100vh pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity">
+              <div className="absolute inset-0 bg-gray-900 opacity-75" />
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div
+              className="inline-block align-center bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-headline"
+            >
+              <div className="bg-white shadow-md px-4 pt-5 pb-4 sm:p-6 sm:pb-4 relative">
+                <button className="absolute top-[15px] right-[15px]" title="close" onClick={toggleModal}>
+                  <Img src={"/assets/imgs/icons/close.png"} height={20} width={20} alt="X" />
+                </button>
+                <AddPost />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isUpdateModalOpen && currentPost && (
+        <div className="fixed z-10 overflow-y-auto top-0 w-full left-0">
+          <div className="flex items-center justify-center min-height-100vh pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity">
+              <div className="absolute inset-0 bg-gray-900 opacity-75" />
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div
+              className="inline-block align-center bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-headline"
+            >
+              <div className="bg-white shadow-md px-4 pt-5 pb-4 sm:p-6 sm:pb-4 relative">
+                <button className="absolute top-[15px] right-[15px]" title="close" onClick={toggleUpdateModal}>
+                  <Img src={"/assets/imgs/icons/close.png"} height={20} width={20} alt="X" />
+                </button>
+                <UpdatePost
+                  // postId={currentPost.id}
+                  initialContent={currentPost.content}
+                  onClose={() => {
+                    setModalPost(null);
+                    setCurrentPost(null); // Clear current post
+                    toggleUpdateModal(); // Close modal
+                  }}
+                  onUpdate={handlePostUpdate} // Pass callback for updating the post
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

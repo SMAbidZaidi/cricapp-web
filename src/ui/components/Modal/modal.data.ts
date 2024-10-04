@@ -8,5 +8,5 @@ export const modalsData: ModalData[] = [
   { name: "login", title: "Login", component: Login },
   { name: "signup", title: "signup", component: SignUp },
   { name: "session-expired", title: "Session Expired", component: SessionExpiredModal },
-  { name: "add_post", title: "Add Post", component: AddPost },
+  // { name: "add_post", title: "Add Post", component: AddPost },
 ] as const;

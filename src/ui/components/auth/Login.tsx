@@ -45,6 +45,7 @@ const Login: React.FC<LoginProps> = ({ modalData, ...props }) => {
           identifier: data.identifier,
           password: data.password,
         });
+
         localStorage.setItem("auth", JSON.stringify(response.data));
         window.location.assign("/");
         router.push("/", {});
