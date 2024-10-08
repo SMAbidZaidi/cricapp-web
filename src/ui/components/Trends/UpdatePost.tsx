@@ -6,19 +6,18 @@ import Input from "@/ui/atoms/Input/Input";
 import { FeedPost } from "@/@types/feed";
 import { updatePost } from "@/api/methods/auth";
 import { useQueryState } from "nuqs";
+import axios from "axios";
 
 interface UpdatePostProps {
-  initialContent: string;
+  previousData: any;
   onClose: () => void;
-  onUpdate: (updatedPost: FeedPost) => void;
 }
 
 interface UserDataState {
   username: string | undefined;
 }
 
-const UpdatePost: React.FC<UpdatePostProps> = ({ initialContent, onClose, onUpdate }) => {
-  const [content, setContent] = useState(initialContent);
+const UpdatePost: React.FC<UpdatePostProps> = ({ previousData, onClose }) => {
   const [modalPostId] = useQueryState("modal_post_id");
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState<UserDataState>({ username: "" });
@@ -28,48 +27,63 @@ const UpdatePost: React.FC<UpdatePostProps> = ({ initialContent, onClose, onUpda
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm();
+
   const decodeToken = () => {
     const auth = localStorage.getItem("auth");
     const userData = auth ? JSON.parse(auth) : null;
     if (userData?.user) {
       setUserData({ username: userData.user.username });
-      console.log("userData", userData.user);
     }
   };
   useEffect(() => {
     decodeToken();
+    if (previousData) {
+      reset({
+        message: previousData.message || "",
+        media: previousData.media || "",
+      });
+    }
   }, []);
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
-    if (!data.message) {
-      toast.error("Post content is empty");
+
+    const auth = localStorage.getItem("auth");
+    const userData = auth ? JSON.parse(auth) : null;
+    const token = userData?.jwt;
+    const updatedFields = {
+      data: {
+        message: data.message,
+        content: data.content,
+      },
+    };
+    if (data.message === previousData.message) {
+      toast.error("No changes detected.");
       setIsLoading(false);
       return;
     }
 
     try {
-      const formData = new FormData();
-      formData.append("message", data.message);
-      if (data.media && data.media.length > 0) {
-        Array.from(data.media).forEach((file: any) => {
-          formData.append("media", file);
-        });
-      }
-
-      console.log("Updating post with formData:", formData);
-
-      const response = await updatePost(modalPostId, formData);
-
+      console.log("Updated Fields:", updatedFields);
+      const response = await axios.put(`https://backend.stage.cricap.com/api/posts/${modalPostId}`, updatedFields, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (response?.data) {
         toast.success("Post updated successfully!");
-        onUpdate(response.data);
         reset();
         onClose();
+      } else {
+        console.error("Failed to update the post. Response:", response.data);
+        toast.error("Failed to update post.");
       }
     } catch (error: any) {
-      toast.error(error?.message || "Failed to update post.");
+      console.error("Error updating post:", error.response?.data || error.message);
+      toast.error(error?.response?.data?.message || "Failed to update post.");
     } finally {
       setIsLoading(false);
     }

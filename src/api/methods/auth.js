@@ -92,7 +92,7 @@ export const commentPost = (id) => {
 export const addPostComment = (postId, userId, commentText, likesCount, createdAt, updatedAt) => {
   return postRequest(`/comments`, {
     post: postId,
-    user: userId,
+    // id: userId,
     commentText,
     likesCount,
     createdAt,
@@ -112,6 +112,12 @@ export const getAddPost = (payload) => {
 export const deletePost = (id) => {
   return deleteRequest(`/posts/${id}`);
 };
+export const deletePostComment = (id) => {
+  return deleteRequest(`/comments/${id}`);
+};
 export const updatePost = (id, formData) => {
   return putRequest(`/posts/${id}`, formData);
+};
+export const getUpdatePost = (id) => {
+  return getRequest(`/posts/${id}`);
 };

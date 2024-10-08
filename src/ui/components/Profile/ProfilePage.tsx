@@ -39,6 +39,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ ...props }) => {
     const auth = localStorage.getItem("auth");
     const userData = auth ? JSON.parse(auth) : null;
     const token = userData?.jwt;
+    console.log(userData);
+
     // console.log("get token ", token);
     const getDate = userData.user.createdAt;
     const formattedDate = dayjs(getDate).format("MMMM YYYY");
@@ -135,8 +137,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ ...props }) => {
         <div className="tab-content-wrapper p-4">
           <activeTab.component />
         </div>
-
-        
       </div>
     </div>
   );

@@ -67,6 +67,11 @@ const Post = () => {
                 <p className="text-[#464646] w-[100%] md:w-[50%]">
                   {post.content && post.content?.length > 0 ? parseContent(post.content) : null}
                 </p>
+                <div
+                  className={`cricq-post-img p-2 ${post.media ? "border-2 border-[#E7E7E7] rounded-[15px]" : "hidden"}`}
+                >
+                  <Img className="rounded-[15px]" src={post.media} height={250} width={500} alt="soon" />
+                </div>
                 <div className="flex gap-4 items-center">
                   {/* Likes Section */}
                   <div className="flex items-center gap-1">

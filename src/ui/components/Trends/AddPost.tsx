@@ -7,8 +7,11 @@ import { toast } from "sonner";
 interface userDataState {
   username: string | undefined;
 }
+interface addPostProps {
+  onClose: () => void;
+}
 
-const AddPost = () => {
+const AddPost: React.FC<addPostProps> = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState<userDataState>({
     username: "",
@@ -68,6 +71,7 @@ const AddPost = () => {
       const responseData = await response.json();
       if (response.ok) {
         toast.success("Post submitted successfully!");
+        onClose();
       } else {
         toast.error(responseData?.error?.message || "Failed to submit post.", {
           position: "top-right",
