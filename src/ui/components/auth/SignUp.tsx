@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema, SignUpValidationSchema } from "../../../validations/signup.validation";
 import { toast } from "sonner";
 import Img from "../Img/Img";
+import Cookies from "js-cookie";
 
 interface SignUpProps extends HTMLAttributes<HTMLDivElement> {
   modalData?: ModalData;
@@ -49,6 +50,7 @@ const SignUp: React.FC<SignUpProps> = ({ modalData, ...props }) => {
         password: data.password,
       });
       localStorage.setItem("auth", JSON.stringify(response.data));
+      Cookies.set("auth", JSON.stringify(response.data));
       window.location.assign("/");
     } catch (error: any) {
       toast.error(error?.response?.data?.error?.message || "Failed to SignUp", {

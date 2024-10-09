@@ -43,7 +43,6 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
     setOpenDropdownId((prevId) => (prevId === postId ? null : postId));
   };
   const [commentOpenDropdownId, setCommentOpenDropdownId] = useState<number | null>(null);
-
   const toggleDropdownComment = (commentId: number) => {
     setCommentOpenDropdownId((prevId) => (prevId === commentId ? null : commentId));
   };

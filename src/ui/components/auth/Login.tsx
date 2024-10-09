@@ -47,6 +47,7 @@ const Login: React.FC<LoginProps> = ({ modalData, ...props }) => {
         });
 
         localStorage.setItem("auth", JSON.stringify(response.data));
+        Cookies.set("auth", JSON.stringify(response.data));
         window.location.assign("/");
         router.push("/", {});
       } catch (error: any) {

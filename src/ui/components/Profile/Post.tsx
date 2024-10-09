@@ -65,7 +65,8 @@ const Post = () => {
               <div className="flex flex-col items-start gap-2">
                 <span className="text-[#464646] text-[18px]">{post.message}</span>
                 <p className="text-[#464646] w-[100%] md:w-[50%]">
-                  {post.content && post.content?.length > 0 ? parseContent(post.content) : null}
+                  {/* {post.content && post.content?.length > 0 ? parseContent(post.content) : null} */}
+                  {post.message}
                 </p>
                 <div
                   className={`cricq-post-img p-2 ${post.media ? "border-2 border-[#E7E7E7] rounded-[15px]" : "hidden"}`}
