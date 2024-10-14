@@ -8,7 +8,7 @@ const BASE_URL = "https://ws.stage.cricap.com/api"; // staging server
 // const userData = auth ? JSON.parse(auth) : null;
 // const token = userData?.jwt;
 
-const cookies = JSON.parse(getCookie("auth"));
+const cookies = JSON.parse(getCookie("auth") || "{}");
 const token = cookies?.jwt;
 
 const client = axios.create({

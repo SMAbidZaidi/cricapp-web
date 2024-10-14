@@ -22,6 +22,7 @@ interface Reply {
   user: {
     username: string;
   };
+  commentText: string;
   replyText: string;
   createdAt: string;
 }
