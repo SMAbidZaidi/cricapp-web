@@ -16,7 +16,7 @@ const client = axios.create({
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    // Authorization: `Bearer ${token}`,
     // Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImlhdCI6MTcyNzY4ODE3NSwiZXhwIjoxNzMwMjgwMTc1fQ.GBa8pBWUqryhCchD9wCrhJx_qPpfJUeMjU2UDXEpSBc`,
   },
 });
