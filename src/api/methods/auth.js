@@ -121,3 +121,8 @@ export const updatePost = (id, formData) => {
 export const getUpdatePost = (id) => {
   return getRequest(`/posts/${id}`);
 };
+export const getReplay = (commentId) => {
+  return getRequest(`comments/comment/${commentId}`);
+};
+
+

@@ -26,6 +26,8 @@ import { useQueryState } from "nuqs";
 import { AddModel } from "./Models";
 import UpdatePost from "./UpdatePost";
 import axios from "axios";
+import PostComments from "./PostComments";
+import DisplayComment from "./DisplayComment";
 
 dayjs.extend(relativeTime);
 
@@ -41,10 +43,6 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const toggleDropdown = (postId: number) => {
     setOpenDropdownId((prevId) => (prevId === postId ? null : postId));
-  };
-  const [commentOpenDropdownId, setCommentOpenDropdownId] = useState<number | null>(null);
-  const toggleDropdownComment = (commentId: number) => {
-    setCommentOpenDropdownId((prevId) => (prevId === commentId ? null : commentId));
   };
 
   const handleInputChange = (event: any, postId: number) => {
@@ -127,6 +125,11 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   };
   // Handle post comment API
   const [commentsData, setCommentsData] = useState<{ [key: number]: any[] }>({});
+  const [editMode, setEditMode] = useState<{ [key: number]: number | null }>({});
+  const [commentOpenDropdownId, setCommentOpenDropdownId] = useState<number | null>(null);
+  // const toggleDropdownComment = (commentId: number) => {
+  //   setCommentOpenDropdownId((prevId) => (prevId === commentId ? null : commentId));
+  // };
   const handlePostComment = async (postId: number) => {
     const commentText = messages[postId]?.replace(/&nbsp;/g, " ").trim();
     const auth = localStorage.getItem("auth");
@@ -134,49 +137,127 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
     const userId = userData?.user?.id;
     const token = userData?.jwt;
 
-    if (!commentText || !userId) {
-      console.log("Empty comment or missing user");
+    // Check if user is logged in
+    if (!userId) {
+      console.log("Missing user");
       return;
     }
 
     try {
       const commentPayload = {
-        commentText: commentText,
+        commentText,
         createdAt: new Date().toISOString(),
         likesCount: 0,
         post: postId,
         updatedAt: new Date().toISOString(),
       };
 
-      const response = await axios.post(
-        "https://ws.stage.cricap.com/api/comments",
-        { data: commentPayload },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      if (editMode[postId] != null) {
+        // Update existing comment
+        const commentId = editMode[postId];
+        console.log("Updating comment with ID: ", commentId);
+        commentPayload.updatedAt = new Date().toISOString();
 
-      console.log("Response from API:", response);
+        const response = await axios.put(
+          `https://ws.stage.cricap.com/api/comments/${commentId}`,
+          { data: commentPayload },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-      if (response.data) {
-        setCommentsData((prevComments) => {
-          const updatedComments = [...(prevComments[postId] || []), response.data];
-          return {
-            ...prevComments,
-            [postId]: updatedComments,
+        if (response.data) {
+          // Ensure the response structure matches your local state
+          const updatedComment = {
+            ...response.data.attributes,
+            id: commentId, // Make sure to keep the comment ID
           };
-        });
-        setMessages((prevMessages) => ({
-          ...prevMessages,
-          [postId]: "",
-        }));
+
+          // Update local comments state
+          setCommentsData((prevComments) => {
+            const updatedComments = prevComments[postId].map((comment) =>
+              comment.id === commentId ? updatedComment : comment
+            );
+            return {
+              ...prevComments,
+              [postId]: updatedComments,
+            };
+          });
+
+          // Clear the message field and exit edit mode
+          setMessages((prevMessages) => ({
+            ...prevMessages,
+            [postId]: "",
+          }));
+          setEditMode((prevEditMode) => ({
+            ...prevEditMode,
+            [postId]: null,
+          }));
+        }
+      } else {
+        // Check if commentText is empty for new comment
+        if (commentText) {
+          // Create a new comment
+          const response = await axios.post(
+            "https://ws.stage.cricap.com/api/comments",
+            { data: commentPayload },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.data) {
+            const newComment = {
+              ...response.data.attributes,
+              id: response.data.id, // Ensure new comment has its ID
+            };
+
+            setCommentsData((prevComments) => {
+              const updatedComments = [...(prevComments[postId] || []), newComment];
+              return {
+                ...prevComments,
+                [postId]: updatedComments,
+              };
+            });
+
+            // Clear the message field after posting a new comment
+            setMessages((prevMessages) => ({
+              ...prevMessages,
+              [postId]: "",
+            }));
+          }
+        } else {
+          console.log("Cannot post empty comment");
+        }
       }
     } catch (error) {
-      console.error("Failed to post comment:", error);
+      console.error("Failed to post/update comment:", error);
     }
+  };
+  // Function to handle editing a comment
+  const handleEditComment = (postId: number, commentId: number, commentText: string) => {
+    // Populate the input field with the comment content
+    setMessages((prevMessages) => ({
+      ...prevMessages,
+      [postId]: commentText,
+    }));
+
+    // Set edit mode with the comment ID
+    setEditMode((prevEditMode) => ({
+      ...prevEditMode,
+      [postId]: commentId,
+    }));
+  };
+
+  // Toggle dropdown for each comment
+  const toggleDropdownComment = (commentId: number) => {
+    setCommentOpenDropdownId(commentOpenDropdownId === commentId ? null : commentId);
   };
   // Handle delete comment API
   const handleDeleteComment = async (commentId: number, postId: number) => {
@@ -357,120 +438,25 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
                     <span> {post.likes}</span>
                   </p>
                 </div>
-
-                {/* Comment input box */}
-                <div className="border-t border-[#E7E7E7] pt-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <ul className="w-full flex items-center">
-                      <li className="flex-1 relative">
-                        <ContentEditable
-                          className="flex items-center py-2 px-4 rounded-lg border-2 border-[#E7E7E7]"
-                          tagName="article"
-                          html={messages[post.id] || ""}
-                          onChange={(event) => handleInputChange(event, post.id)}
-                        />
-                        {/* Placeholder */}
-                        {(!messages[post.id] || messages[post.id] === "") && (
-                          <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                            Write the Comments...
-                          </span>
-                        )}
-                      </li>
-                      <li className="px-1">
-                        <label className="cursor-pointer">
-                          <Paperclip size={20} className="text-[#464646]" />
-                          <input className="hidden" type="file" />
-                        </label>
-                      </li>
-                      <li>
-                        <div className="group relative inline-block">
-                          <button className="w-[40px] h-[40px] p-1 text-[16px] text-white focus:outline-none">
-                            <Img src={"/assets/imgs/icons/mood.svg"} height={50} width={50} alt="User" />
-                          </button>
-                          <ul className="hidden group-focus-within:block list-none absolute z-1 shadow-lg animate-slideIn">
-                            <EmojiPicker
-                              lazyLoadEmojis
-                              height={400}
-                              previewConfig={{
-                                showPreview: false,
-                              }}
-                              onEmojiClick={(emojiData) => {
-                                const emoji = emojiData.emoji;
-                                setMessages((prevMessages) => ({
-                                  ...prevMessages,
-                                  [post.id]: (prevMessages[post.id] || "") + emoji,
-                                }));
-                              }}
-                            />
-                          </ul>
-                        </div>
-                      </li>
-                    </ul>
-                    <button
-                      className="text-[#464646] px-4 py-2 rounded-lg bg-[#E7E7E7] cursor-pointer"
-                      onClick={() => handlePostComment(post.id)}
-                    >
-                      Post
-                    </button>
-                  </div>
+                <div key={index} className="flex flex-col items-start gap-2 my-[30px]">
+                  {/* Other post-related code */}
+                  <PostComments
+                    post={post}
+                    messages={messages}
+                    handleInputChange={handleInputChange}
+                    handlePostComment={handlePostComment}
+                    setMessages={setMessages}
+                    editMode={editMode}
+                  />
+                  <DisplayComment
+                    postId={post.id}
+                    postComments={postComments}
+                    toggleDropdownComment={toggleDropdownComment}
+                    commentOpenDropdownId={commentOpenDropdownId}
+                    handleEditComment={handleEditComment}
+                    handleDeleteComment={handleDeleteComment}
+                  />
                 </div>
-
-                {/* Display comments */}
-                {postComments?.map((comment, index) => (
-                  <div key={index} className="flex gap-2 my-3">
-                    <div className="comment-content flex gap-2 bg-[#F5F5F5] p-3 rounded-lg w-full">
-                      <div>
-                        <Img
-                          src={"/assets/imgs/icons/LoginUser.png"}
-                          height={50}
-                          width={50}
-                          alt="User"
-                          className="rounded-full"
-                        />
-                      </div>
-                      <div className="w-full">
-                        <div className="flex gap-2 items-center justify-between w-full">
-                          <span className="font-semibold text-black text-[16px]">{comment?.user?.username}</span>
-                          <div className="w-full text-end flex flex-col items-end relative">
-                            <button
-                              onClick={() => toggleDropdownComment(comment?.id)}
-                              className="text-black dark:hover:bg-[#E7E7E7] rounded-lg font-medium text-lg px-2 pb-2 text-center inline-flex items-center h-[25px]"
-                            >
-                              ...
-                            </button>
-                            {commentOpenDropdownId === comment.id && (
-                              <div className="z-10 divide-y divide-gray-100 rounded-lg shadow-lg w-40 bg-white text-end absolute top-[30px]">
-                                <ul className="py-2 text-sm dark:text-gray-200">
-                                  <li className="cursor-pointer">
-                                    <a className="block px-4 py-2 text-[#9E9E9E] hover:bg-gray-100 dark:hover:text-[#439B45]">
-                                      Update
-                                    </a>
-                                  </li>
-                                  <li
-                                    className="cursor-pointer"
-                                    onClick={() => handleDeleteComment(comment.id, post.id)}
-                                  >
-                                    <a className="block px-4 py-2 text-[#9E9E9E] hover:bg-gray-100 dark:hover:text-[red]">
-                                      Delete
-                                    </a>
-                                  </li>
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-[#464646] text-[14px] mt-2">{comment?.commentText}</p>
-                        <div className="mt-2 flex justify-between gap-4 text-sm text-[#9E9E9E]">
-                          <div className="flex gap-4 text-sm ">
-                            <span className="cursor-pointer">Likes</span>
-                            <span className="cursor-pointer">Reply</span>
-                          </div>
-                          <span>{dayjs(comment?.createdAt).fromNow()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           );
