@@ -1,3 +1,4 @@
+"use client";
 import HomePageNews from "@/ui/components/HomePageMainSection/HomePageNews";
 import MatchesPageMainSection from "@/ui/components/MatchesPage/MatchesPageMainSection";
 import MatchesPageMainTabs from "@/ui/components/MatchesPage/MatchesPageMainTabs";

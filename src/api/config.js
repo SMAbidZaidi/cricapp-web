@@ -1,4 +1,5 @@
 import { getCookie } from "@/utils/getToken";
+import { getCookieValue, getToken } from "@/utils/getTokenCookie";
 import axios from "axios";
 
 const BASE_URL = "https://ws.stage.cricap.com/api"; // staging server
@@ -8,19 +9,23 @@ const BASE_URL = "https://ws.stage.cricap.com/api"; // staging server
 // const userData = auth ? JSON.parse(auth) : null;
 // const token = userData?.jwt;
 
-const cookies = JSON.parse(getCookie("auth") || "{}");
-const token = cookies?.jwt;
-
 const client = axios.create({
   baseURL: BASE_URL,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
-    // Authorization: `Bearer ${token}`,
-    // Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsImlhdCI6MTcyNzY4ODE3NSwiZXhwIjoxNzMwMjgwMTc1fQ.GBa8pBWUqryhCchD9wCrhJx_qPpfJUeMjU2UDXEpSBc`,
   },
 });
 
+client.interceptors.request.use((config) => {
+  const token = getToken();
+  console.log("this is token", token);
+
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
+  }
+  return config;
+});
 client.interceptors.request.use(
   async (config) => {
     const requestConfig = config;
