@@ -14,7 +14,7 @@ const Img: React.FC<ImgProps> = ({ alt, src, ...props }) => {
   return !error ? (
     <Image src={src} alt={alt} onError={() => setError(true)} {...props} />
   ) : (
-    <Image src={"/assets/imgs/icons/error-placeholder.jpg"} alt={"hello wordl"} {...props} />
+    <Image src={"/assets/imgs/icons/error-placeholder.jpg"} alt={"img"} {...props} />
   );
 };
 export default Img;
