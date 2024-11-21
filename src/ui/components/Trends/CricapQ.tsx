@@ -325,11 +325,13 @@ const CricapQ: React.FC<CricapQProps> = ({ ...props }) => {
   if (postsData.isError) {
     return <ServerError />;
   }
+  
   return (
     <div {...props} className="w-full h-full grid grid-cols-1 md:grid-cols-6 gap-2 bg-white">
       <div className="md:col-start-2 col-span-4 mx-[8px]">
         {postsData?.data?.map((post, index) => {
-          const getDate = post.createdAt;
+          console.log("🚀 ~ {postsData?.data?.map ~ post:", post)
+          const getDate = post.date;
           const formattedDate = dayjs(getDate).fromNow();
           const postComments = commentsData[post.id] || [];
 

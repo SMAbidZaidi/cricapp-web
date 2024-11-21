@@ -210,7 +210,7 @@ const DisplayComment: React.FC<DisplayCommentProps> = ({
                       Reply
                     </span>
                   </div>
-                  <span>{dayjs(comment.createdAt).fromNow()}</span>
+                  {/* <span>{dayjs(comment.Date).fromNow()}</span> */}
                 </div>
               </div>
             </div>
