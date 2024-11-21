@@ -60,7 +60,7 @@ const AddPost: React.FC<addPostProps> = ({ onClose }) => {
           formData.append("media", file);
         });
       }
-      const response = await fetch("https://backend.stage.cricap.com/api/posts", {
+      const response = await fetch("https://backend.stage.cricap.com/api/posts/create-post", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

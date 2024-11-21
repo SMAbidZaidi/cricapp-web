@@ -16,6 +16,7 @@ import { loginSchema } from "@/validations/login.validation";
 import { toast } from "sonner";
 import Img from "../Img/Img";
 import Cookies from "js-cookie";
+import axios from "axios";
 
 interface LoginProps extends HTMLAttributes<HTMLDivElement> {
   modalData?: ModalData;
@@ -41,7 +42,8 @@ const Login: React.FC<LoginProps> = ({ modalData, ...props }) => {
     async (data) => {
       try {
         setIsLoading(true);
-        const response = await LoginAPI({
+  
+        const response = await axios.post("https://ws.stage.cricap.com/api/auth/local", {
           identifier: data.identifier,
           password: data.password,
         });
