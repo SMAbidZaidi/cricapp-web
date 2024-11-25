@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://cricapp-web.vercel.app/
+
+# Sitemaps
+Sitemap: https://cricapp-web.vercel.app/sitemap.xml
